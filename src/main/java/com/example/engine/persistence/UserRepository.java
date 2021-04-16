@@ -1,10 +1,10 @@
 package com.example.engine.persistence;
 
-import com.example.engine.persistence.model.Quiz;
+import com.example.engine.persistence.model.User;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface QuizRepository extends CrudRepository<Quiz, Long> {
+public interface UserRepository extends CrudRepository<User, String> {
 
 }

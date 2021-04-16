@@ -1,4 +1,4 @@
-package com.example.engine.model;
+package com.example.engine.api;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Response {
+public class SolveResponse {
 
     public static final String CORRECT_ANSWER = "Congratulations, you're right!";
     public static final String WRONG_ANSWER ="Wrong answer! Please, try again.";

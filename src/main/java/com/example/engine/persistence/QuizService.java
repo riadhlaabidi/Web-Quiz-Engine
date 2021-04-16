@@ -1,9 +1,9 @@
 package com.example.engine.persistence;
 
 import com.example.engine.exception.QuizNotFoundException;
-import com.example.engine.model.Quiz;
-import com.example.engine.model.Response;
-import com.example.engine.model.UserAnswer;
+import com.example.engine.persistence.model.Quiz;
+import com.example.engine.api.SolveResponse;
+import com.example.engine.api.UserAnswer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,18 +30,21 @@ public class QuizService {
                 .orElseThrow(QuizNotFoundException::new);
     }
 
+    public void delete(long id) {
+        if (quizRepository.existsById(id)) {
+            quizRepository.deleteById(id);
+            return;
+        }
+        throw new QuizNotFoundException();
+    }
+
     public List<Quiz> getQuizzes() {
         List<Quiz> allQuizzes = new ArrayList<>();
         quizRepository.findAll().forEach(allQuizzes::add);
         return allQuizzes;
     }
 
-    public Response solve(long id, UserAnswer userAnswer) {
-        return this
-                .get(id)
-                .getAnswer()
-                .equals(userAnswer.getAnswer())
-                ? new Response(true, Response.CORRECT_ANSWER)
-                : new Response(false, Response.WRONG_ANSWER);
+    public boolean solveQuiz(long id, UserAnswer userAnswer) {
+        return get(id).getAnswer().equals(userAnswer.getAnswer());
     }
 }

@@ -1,5 +1,6 @@
-package com.example.engine.model;
+package com.example.engine.persistence.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,15 +33,22 @@ public class Quiz {
     @ElementCollection
     @CollectionTable(
             name = "QUIZ_OPTIONS",
-            joinColumns = @JoinColumn(name = "QUIZ_ID") )
+            joinColumns = @JoinColumn(name = "QUIZ_ID")
+    )
     @Column(name = "QUIZ_OPTION")
     private List<String> options;
 
     @ElementCollection
     @CollectionTable(
             name = "QUIZ_ANSWERS",
-            joinColumns = @JoinColumn(name = "QUIZ_ID") )
+            joinColumns = @JoinColumn(name = "QUIZ_ID")
+    )
     @Column(name = "QUIZ_ANSWER")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Set<Integer> answer;
+
+    @ManyToOne
+    @JoinColumn(name="USER_ID", nullable=false)
+    @JsonIgnore
+    private User user;
 }

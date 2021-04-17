@@ -1,33 +1,44 @@
 package com.example.engine.api;
 
+import com.example.engine.persistence.QuizCompletionService;
 import com.example.engine.persistence.QuizService;
 import com.example.engine.persistence.UserService;
 import com.example.engine.persistence.model.Quiz;
+import com.example.engine.persistence.model.QuizCompletion;
 import com.example.engine.persistence.model.User;
 import com.example.engine.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
+@Validated
 @RequestMapping("/api")
 public class Api {
 
     private final UserService userService;
     private final QuizService quizService;
+    private final QuizCompletionService quizCompletionService;
 
     @Autowired
-    public Api(UserService userService, QuizService quizService) {
+    public Api(UserService userService, QuizService quizService,
+               QuizCompletionService quizCompletionService) {
         this.userService = userService;
         this.quizService = quizService;
+        this.quizCompletionService = quizCompletionService;
     }
 
-    @PostMapping(value = "/register")
+    @PostMapping(value = "/register", consumes = "application/json")
     public ResponseEntity<String> registerNewUser(@Valid @RequestBody User user) {
         userService.registerNewUser(user);
         return ResponseEntity.ok().build();
@@ -45,6 +56,33 @@ public class Api {
         return quizService.get(id);
     }
 
+    @GetMapping(value = "/quizzes")
+    public Page<Quiz> getAllQuizzes(
+            @Min(0) @RequestParam(defaultValue = "0") int page,
+            @Min(10) @Max(30) @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "id") String sortBy) {
+        return quizService.getAllQuizzes(page, pageSize, sortBy);
+    }
+
+    @PostMapping(value = "/quizzes/{id}/solve", consumes = "application/json")
+    public SolveResponse solveQuiz(@PathVariable long id,
+                                   @RequestBody UserAnswer userAnswer,
+                                   @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        if (quizService.solve(id, userAnswer)) {
+            QuizCompletion quizCompletion = new QuizCompletion(
+                    userPrincipal.user().getEmail(),
+                    id,
+                    LocalDateTime.now(),
+                    userPrincipal.user(),
+                    quizService.get(id)
+            );
+            quizCompletionService.add(quizCompletion);
+            return new SolveResponse(true, SolveResponse.CORRECT_ANSWER);
+        }
+        return new SolveResponse(false, SolveResponse.WRONG_ANSWER);
+    }
+
     @DeleteMapping("/quizzes/{id}")
     public ResponseEntity<String> delete(@PathVariable long id,
                                          @AuthenticationPrincipal UserPrincipal userPrincipal) {
@@ -56,15 +94,19 @@ public class Api {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
-    @GetMapping(value = "/quizzes")
-    public List<Quiz> getQuizzes() {
-        return quizService.getQuizzes();
-    }
+    @GetMapping("/quizzes/completed")
+    public Page<QuizCompletion> getUserCompletions(
+            @Min(0) @RequestParam(defaultValue = "0") int page,
+            @Min(10) @Max(30) @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "completionDate") String sortBy,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-    @PostMapping(value = "/quizzes/{id}/solve")
-    public SolveResponse solveQuiz(@PathVariable long id, @RequestBody UserAnswer userAnswer) {
-        return quizService.solveQuiz(id, userAnswer)
-                ? new SolveResponse(true, SolveResponse.CORRECT_ANSWER)
-                : new SolveResponse(false, SolveResponse.WRONG_ANSWER);
+        return quizCompletionService.getCompletions(
+                userPrincipal.user().getEmail(),
+                page,
+                pageSize,
+                sortBy
+        );
     }
 }
+

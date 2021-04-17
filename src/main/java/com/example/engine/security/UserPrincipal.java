@@ -12,7 +12,7 @@ public record UserPrincipal(User user) implements UserDetails {
 
     @Override
     public List<GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(user.getRole().name()));
+        return List.of(new SimpleGrantedAuthority(user.getAuthority().name()));
     }
 
     @Override

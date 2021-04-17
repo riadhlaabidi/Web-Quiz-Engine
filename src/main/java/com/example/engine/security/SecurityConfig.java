@@ -36,9 +36,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.httpBasic()
                 .and().authorizeRequests()
                     .antMatchers("/api/register").anonymous()
-                    .antMatchers("/h2-console/**").hasRole("ADMIN")
-                .and().authorizeRequests()
-                    .anyRequest().authenticated()
+                    .antMatchers("/h2-console/**")
+                    .hasAnyAuthority(Authority.ADMIN.name(), Authority.USER.name())  //for testing
+                    .anyRequest().hasAuthority(Authority.USER.name())
                 .and()
                     .csrf().disable()
                     .headers().frameOptions().disable();

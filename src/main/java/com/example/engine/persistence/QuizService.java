@@ -2,13 +2,14 @@ package com.example.engine.persistence;
 
 import com.example.engine.exception.QuizNotFoundException;
 import com.example.engine.persistence.model.Quiz;
-import com.example.engine.api.SolveResponse;
 import com.example.engine.api.UserAnswer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class QuizService {
@@ -38,13 +39,12 @@ public class QuizService {
         throw new QuizNotFoundException();
     }
 
-    public List<Quiz> getQuizzes() {
-        List<Quiz> allQuizzes = new ArrayList<>();
-        quizRepository.findAll().forEach(allQuizzes::add);
-        return allQuizzes;
+    public boolean solve(long id, UserAnswer userAnswer) {
+        return get(id).getAnswer().equals(userAnswer.getAnswer());
     }
 
-    public boolean solveQuiz(long id, UserAnswer userAnswer) {
-        return get(id).getAnswer().equals(userAnswer.getAnswer());
+    public Page<Quiz> getAllQuizzes(int pageNumber, int pageSize, String sortBy) {
+        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sortBy));
+        return quizRepository.findAll(paging);
     }
 }
